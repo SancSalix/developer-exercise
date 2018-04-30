@@ -51,41 +51,78 @@ class Hand
   end
 end
 
-require 'test/unit'
-
-class CardTest < Test::Unit::TestCase
-  def setup
-    @card = Card.new(:hearts, :ten, 10)
+class Game
+  attr_accessor :points_dealer, :points_player, :cards_player, :visible_card_dealer, :hidden_card_dealer
+  BLACKJACK = 21
+  HOUSECAP = 17
+  
+  def initialize
+    @points_dealer = 0
+    @points_player = 0
+    @cards_player = []
+    @hidden_card_dealer = nil
+    @cards_dealer = []
   end
   
-  def test_card_suite_is_correct
-    assert_equal @card.suite, :hearts
-  end
-
-  def test_card_name_is_correct
-    assert_equal @card.name, :ten
-  end
-  def test_card_value_is_correct
-    assert_equal @card.value, 10
-  end
-end
-
-class DeckTest < Test::Unit::TestCase
-  def setup
+  def game_start
     @deck = Deck.new
-  end
-  
-  def test_new_deck_has_52_playable_cards
-    assert_equal @deck.playable_cards.size, 52
-  end
-  
-  def test_dealt_card_should_not_be_included_in_playable_cards
-    card = @deck.deal_card
-    assert(@deck.playable_cards.include?(card))
-  end
-
-  def test_shuffled_deck_has_52_playable_cards
     @deck.shuffle
-    assert_equal @deck.playable_cards.size, 52
+    2.times do 
+      @points_player = @points_player + deal_in_game(@cards_player, @deck, @points_player, "Player")
+    end
+     point_check(@points_player, "Player")
+     2.times do 
+      @points_dealer = @points_dealer + deal_in_game(@cards_dealer, @deck, @points_dealer, "House")
+    end
+    point_check(@points_dealer, "House")
+    @hidden_card_dealer = @cards_dealer[0]
+    until @points_dealer >= HOUSECAP do
+      @points_dealer = @points_dealer + deal_in_game(@cards_dealer, @deck, @points_dealer, "House")
+      point_check(@points_dealer, "House")
+    end 
+    game_in_progress
   end
+  
+  def game_in_progress
+    if @points_player < BLACKJACK
+      @points_player = @points_player + deal_in_game(@cards_player, @deck, @points_player, "Player")
+      point_check(@points_player, "Player")
+    end
+    game_in_progress
+  end
+  
+  
+
+  def deal_in_game(hand, deck, points_current, person)
+    @deck = deck
+    card = @deck.deal_card
+    hand.push(card)
+    puts "Dealt #{card.name} of #{card.suite} to #{person}"
+    puts "\n"
+    
+    if card.name.to_s == 'ace' && 11 + points_current > BLACKJACK
+        point = 1
+    elsif card.name.to_s == 'ace' && 11 + points_current <= BLACKJACK
+        point = 11
+    elsif card.name.to_s != 'ace'
+        point = hand[-1].value
+    end
+    return point
+  end
+  
+  def point_check(points, person)
+    game_end = false
+    if points == BLACKJACK
+      puts "#{person} Wins!"
+       game_end = true
+      exit(0)
+    elsif points > BLACKJACK
+      puts "#{person} Busts"
+       game_end = true
+      exit(0)
+    end
+    return game_end
+  end
+  
+  
 end
