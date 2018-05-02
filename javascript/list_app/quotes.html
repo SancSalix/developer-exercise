@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
                     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
+
 <head>
   <title>List App</title>
   <script src="http://code.jquery.com/jquery-latest.js"></script>
@@ -9,15 +10,103 @@
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
 </head>
+
 <body>
   <div id="quotes"></div>
   <script type="text/babel">
+  class Quotes extends React.Component{
+ constructor(){
+    super();
+    // Set initial state
+    this.state = {
+      data: [],
+      page: 1,
+      show: "all"
+    }
+
+  }
+
+setView(event) {
+    this.setState({
+        show: event.target.value
+      });
+  }
+
+  // Add click handler
+  clickNext(){
+    // Update state
+    this.setState({
+        page: this.state.page + 1
+      });
+  }
+
+    // Add click handler
+    clickPrev(){
+    // Update state
+    this.setState({
+        page: this.state.page - 1
+      });
+  }
+
+  componentDidMount() {
+    fetch('https://gist.githubusercontent.com/anonymous/8f61a8733ed7fa41c4ea/raw/1e90fd2741bb6310582e3822f59927eb535f6c73/quotes.json')
+      .then(response => response.json())
+      .then(jsonData => this.setState({ data: jsonData }));
+  }
+
+  render(){
+    const quoteLimit = 10;
+    let totalPages = 0;
+    const { data, page} = this.state;
+
+    let currentData = [];
+    for(var i = 0; i < data.length; i++){
+      if(data[i].theme === this.state.show || this.state.show === "all"){
+        currentData.push(data[i]);
+      }
+    }
+
+    const currentQuotes = currentData.slice(((this.state.page * quoteLimit)-quoteLimit),(this.state.page * quoteLimit));
+
+    const shownQuotes = currentQuotes.map((data, index) => {
+      if(data.theme === this.state.show || this.state.show === "all"){
+        return (
+          <li key={index}><b>Source:</b> {data.source} || <b>Context:</b> {data.context} || <b>Quote:</b> { data.quote } || <b>Theme:</b> {data.theme} </li>
+        )
+      }
+      })
+
+    totalPages = Math.ceil(currentData.length/quoteLimit);
+
+    return (
+      <div>
+        <ul>{shownQuotes}</ul>
+        { this.state.page > 1
+                ? <button onClick={this.clickPrev.bind(this)}>Previous</button>
+                : null
+            }
+            { this.state.page < totalPages
+                ? <button onClick={this.clickNext.bind(this)}>Next</button>
+                : null
+            }
+            <div>
+        <input type="radio" value="movies" name="show" checked={this.state.show === "movies"}  onChange={this.setView.bind(this)}/> Movies
+        <input type="radio" value="games" name="show" checked={this.state.show === "games"}  onChange={this.setView.bind(this)}/> Games
+        <input type="radio" value="all" name="show"checked={this.state.show === "all"}  onChange={this.setView.bind(this)}/> All
+
+      </div>
+      </div>
+    );
+  }
+}
     ReactDOM.render(
       <div>
         <h1>Quotes</h1>
+        <Quotes/>
       </div>,
       document.getElementById('quotes')
     );
   </script>
 </body>
+
 </html>
