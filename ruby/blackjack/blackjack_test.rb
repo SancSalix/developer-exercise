@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'pry'
 require_relative 'blackjack'
 
 class CardTest < Test::Unit::TestCase
